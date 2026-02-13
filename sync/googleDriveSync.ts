@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import { Notice } from "obsidian";
 import type { App } from "obsidian";
 
 export interface SyncFile {
@@ -15,20 +16,23 @@ export class GoogleDriveSync {
 	private accessToken: string;
 	private refreshToken: string;
 	private folderId: string;
+	private clientId: string;
+	private clientSecret: string;
 	private vault: App["vault"];
 
 	constructor(settings: any, vault: App["vault"]) {
 		this.vault = vault;
 		this.accessToken = settings.accessToken;
 		this.refreshToken = settings.refreshToken;
-		this.folderId = settings.folderId;
+		this.folderId = settings.folderId || "root";
+		this.clientId = settings.clientId || "";
+		this.clientSecret = settings.clientSecret || "";
 
-		// Initialize OAuth2 client
-		const env = typeof process !== "undefined" ? process.env : undefined;
+		// Initialize OAuth2 client (redirect not used for device flow)
 		this.oauth2Client = new google.auth.OAuth2(
-			env?.GOOGLE_CLIENT_ID || "YOUR_CLIENT_ID.apps.googleusercontent.com",
-			env?.GOOGLE_CLIENT_SECRET || "YOUR_CLIENT_SECRET",
-			env?.GOOGLE_REDIRECT_URI || "urn:ietf:wg:oauth:2.0:oob"
+			this.clientId || "placeholder",
+			this.clientSecret || "placeholder",
+			"urn:ietf:wg:oauth:2.0:oob"
 		);
 
 		if (this.accessToken) {
@@ -41,22 +45,89 @@ export class GoogleDriveSync {
 	}
 
 	async authenticate(): Promise<{ accessToken: string; refreshToken: string }> {
-		const authUrl = this.oauth2Client.generateAuthUrl({
-			access_type: "offline",
-			scope: [
-				"https://www.googleapis.com/auth/drive",
-				"https://www.googleapis.com/auth/drive.file",
-			],
+		if (!this.clientId || !this.clientSecret) {
+			throw new Error("Set Client ID and Client Secret in settings before authenticating.");
+		}
+
+		const scope = "https://www.googleapis.com/auth/drive.file";
+		const deviceParams = new URLSearchParams({
+			client_id: this.clientId,
+			scope,
 		});
 
-		console.log("Please visit this URL to authorize the application:");
-		console.log(authUrl);
+		const deviceResp = await fetch("https://oauth2.googleapis.com/device/code", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/x-www-form-urlencoded",
+			},
+			body: deviceParams.toString(),
+		});
 
-		// For browser environment, we would open the URL
-		// For now, we'll throw an error with the URL
-		throw new Error(
-			`Please visit this URL to authorize: ${authUrl}\n\nAfter authorization, you'll get a code. Use that code to complete authentication.`
+		if (!deviceResp.ok) {
+			throw new Error("Failed to start device authorization.");
+		}
+
+		const deviceData = await deviceResp.json();
+		const { device_code, user_code, verification_url, interval = 5 } = deviceData;
+
+		new Notice(
+			`Open ${verification_url}\nEnter code: ${user_code}\nKeep this window open; polling for completion...`,
+			10000
 		);
+
+		// Poll token endpoint until authorized
+		const pollParams = () =>
+			new URLSearchParams({
+				client_id: this.clientId,
+				client_secret: this.clientSecret,
+				device_code,
+				grant_type: "urn:ietf:params:oauth:grant-type:device_code",
+			});
+
+		const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+		let currentInterval = interval * 1000;
+
+		while (true) {
+			await wait(currentInterval);
+
+			const tokenResp = await fetch("https://oauth2.googleapis.com/token", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/x-www-form-urlencoded",
+				},
+				body: pollParams().toString(),
+			});
+
+			const tokenData = await tokenResp.json();
+
+			if (tokenResp.ok) {
+				this.accessToken = tokenData.access_token;
+				this.refreshToken = tokenData.refresh_token;
+
+				this.oauth2Client.setCredentials({
+					access_token: this.accessToken,
+					refresh_token: this.refreshToken,
+				});
+				this.drive = google.drive({ version: "v3", auth: this.oauth2Client });
+
+				new Notice("Google Drive authenticated.");
+				return {
+					accessToken: this.accessToken,
+					refreshToken: this.refreshToken,
+				};
+			}
+
+			if (tokenData.error === "authorization_pending") {
+				continue;
+			}
+
+			if (tokenData.error === "slow_down") {
+				currentInterval += 2000;
+				continue;
+			}
+
+			throw new Error(tokenData.error_description || "Authorization failed.");
+		}
 	}
 
 	async handleAuthorizationCode(code: string): Promise<{ accessToken: string; refreshToken: string }> {
@@ -86,6 +157,27 @@ export class GoogleDriveSync {
 			refresh_token: refreshToken,
 		});
 		this.drive = google.drive({ version: "v3", auth: this.oauth2Client });
+	}
+
+	setFolderId(folderId: string) {
+		this.folderId = folderId || "root";
+	}
+
+	setClientCredentials(clientId: string, clientSecret: string) {
+		this.clientId = clientId || "";
+		this.clientSecret = clientSecret || "";
+		this.oauth2Client = new google.auth.OAuth2(
+			this.clientId || "placeholder",
+			this.clientSecret || "placeholder",
+			"urn:ietf:wg:oauth:2.0:oob"
+		);
+		if (this.accessToken) {
+			this.oauth2Client.setCredentials({
+				access_token: this.accessToken,
+				refresh_token: this.refreshToken,
+			});
+			this.drive = google.drive({ version: "v3", auth: this.oauth2Client });
+		}
 	}
 
 	async listFiles(): Promise<SyncFile[]> {

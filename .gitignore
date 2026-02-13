@@ -13,6 +13,7 @@ credentials.json
 *.pem
 dist/
 build/
+obsidian-sync/
 obsidian-sync-*.zip
 *.log
 npm-debug.log*

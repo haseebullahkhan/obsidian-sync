@@ -22,6 +22,8 @@ interface GoogleDriveSyncSettings {
 	accessToken: string;
 	refreshToken: string;
 	folderId: string;
+	clientId: string;
+	clientSecret: string;
 	autoSync: boolean;
 	syncInterval: number;
 	conflictResolution: "local" | "remote" | "manual";
@@ -31,7 +33,9 @@ interface GoogleDriveSyncSettings {
 const DEFAULT_SETTINGS: GoogleDriveSyncSettings = {
 	accessToken: "",
 	refreshToken: "",
-	folderId: "",
+	folderId: "root",
+	clientId: "",
+	clientSecret: "",
 	autoSync: true,
 	syncInterval: 5 * 60 * 1000, // 5 minutes
 	conflictResolution: "manual",
@@ -142,6 +146,16 @@ export default class GoogleDriveSyncPlugin extends Plugin {
 	async authenticateWithGoogle() {
 		try {
 			new Notice("Attempting to authenticate with Google Drive...");
+			if (!this.settings.clientId || !this.settings.clientSecret) {
+				new Notice("Add your Google Client ID/Secret in settings first.");
+				return;
+			}
+
+			this.googleDriveSync.setClientCredentials(
+				this.settings.clientId,
+				this.settings.clientSecret
+			);
+
 			const { accessToken, refreshToken } = await this.googleDriveSync.authenticate();
 			
 			this.settings.accessToken = accessToken;
@@ -368,6 +382,59 @@ class GoogleDriveSyncSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 
 		containerEl.empty();
+
+		new Setting(containerEl)
+			.setName("Google Client ID")
+			.setDesc("From your Google Cloud OAuth client (Desktop app)")
+			.addText((text: TextComponent) =>
+				text
+					.setPlaceholder("xxxxxxxx.apps.googleusercontent.com")
+					.setValue(this.plugin.settings.clientId)
+					.onChange(async (value: string) => {
+						this.plugin.settings.clientId = value.trim();
+						await this.plugin.saveSettings();
+						this.plugin.googleDriveSync.setClientCredentials(
+							this.plugin.settings.clientId,
+							this.plugin.settings.clientSecret
+						);
+					})
+			);
+
+		const secretSetting = new Setting(containerEl)
+			.setName("Google Client Secret")
+			.setDesc("Keep this private; stored locally in plugin data")
+			.addText((text: TextComponent) =>
+				text
+					.setPlaceholder("client secret")
+					.setValue(this.plugin.settings.clientSecret)
+					.onChange(async (value: string) => {
+						this.plugin.settings.clientSecret = value.trim();
+						await this.plugin.saveSettings();
+						this.plugin.googleDriveSync.setClientCredentials(
+							this.plugin.settings.clientId,
+							this.plugin.settings.clientSecret
+						);
+					})
+			);
+
+		const secretInput = secretSetting.controlEl.querySelector("input");
+		if (secretInput) {
+			(secretInput as HTMLInputElement).type = "password";
+		}
+
+		new Setting(containerEl)
+			.setName("Drive folder ID (optional)")
+			.setDesc("Defaults to root. Set a folder ID to scope sync.")
+			.addText((text: TextComponent) =>
+				text
+					.setPlaceholder("root")
+					.setValue(this.plugin.settings.folderId)
+					.onChange(async (value: string) => {
+						this.plugin.settings.folderId = value.trim() || "root";
+						await this.plugin.saveSettings();
+						this.plugin.googleDriveSync.setFolderId(this.plugin.settings.folderId);
+					})
+			);
 
 		new Setting(containerEl)
 			.setName("Authenticate")
