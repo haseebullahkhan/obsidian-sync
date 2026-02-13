@@ -1,0 +1,11 @@
+* text=auto
+
+# Keep scripts and source LF-normalized
+*.sh text eol=lf
+*.mjs text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.md text eol=lf
+
+# Windows batch files stay CRLF
+*.bat text eol=crlf

@@ -1,0 +1,11 @@
+{
+  "id": "obsidian-sync",
+  "name": "Obsidian Sync",
+  "version": "1.0.0",
+  "minAppVersion": "0.15.0",
+  "description": "Sync your Obsidian vault bidirectionally with Google Drive with automatic sync and conflict resolution",
+  "author": "Your Name",
+  "authorUrl": "https://github.com",
+  "fundingUrl": "https://buymeacoffee.com",
+  "isDesktopOnly": false
+}

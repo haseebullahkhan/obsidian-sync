@@ -1,0 +1,138 @@
+/* Obsidian Sync Plugin Styles */
+
+.sync-status-container {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px;
+	border-radius: 4px;
+	margin: 8px 0;
+}
+
+.sync-status-container.idle {
+	background-color: rgba(100, 200, 100, 0.1);
+	color: var(--text-normal);
+}
+
+.sync-status-container.syncing {
+	background-color: rgba(100, 150, 255, 0.1);
+	color: var(--text-normal);
+}
+
+.sync-status-container.error {
+	background-color: rgba(255, 100, 100, 0.1);
+	color: var(--text-error);
+}
+
+.sync-status-indicator {
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	display: inline-block;
+}
+
+.sync-status-indicator.idle {
+	background-color: #64c864;
+}
+
+.sync-status-indicator.syncing {
+	background-color: #6496ff;
+	animation: pulse 1s infinite;
+}
+
+.sync-status-indicator.error {
+	background-color: #ff6464;
+}
+
+@keyframes pulse {
+	0% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.5;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+.conflict-item {
+	padding: 12px;
+	border: 1px solid var(--divider-color);
+	border-radius: 4px;
+	margin: 8px 0;
+	background-color: rgba(255, 200, 100, 0.05);
+}
+
+.conflict-path {
+	font-weight: bold;
+	margin-bottom: 4px;
+	font-family: monospace;
+}
+
+.conflict-details {
+	font-size: 0.85em;
+	color: var(--text-muted);
+}
+
+.sync-button {
+	margin: 8px 0;
+}
+
+.sync-history {
+	max-height: 200px;
+	overflow-y: auto;
+	padding: 8px;
+	background-color: rgba(0, 0, 0, 0.05);
+	border-radius: 4px;
+	font-size: 0.85em;
+}
+
+.sync-history-item {
+	padding: 4px 0;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.sync-history-item:last-child {
+	border-bottom: none;
+}
+
+.auth-status {
+	display: inline-block;
+	padding: 4px 8px;
+	border-radius: 3px;
+	font-size: 0.9em;
+	margin-left: 8px;
+}
+
+.auth-status.authenticated {
+	background-color: rgba(100, 200, 100, 0.2);
+	color: #64c864;
+}
+
+.auth-status.not-authenticated {
+	background-color: rgba(255, 100, 100, 0.2);
+	color: #ff6464;
+}
+
+/* Sync interval input */
+.sync-interval-input {
+	max-width: 150px;
+}
+
+/* Settings section */
+.plugin-settings-tab .setting-item {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.plugin-settings-tab .setting-item-info {
+	margin-bottom: 8px;
+}
+
+.plugin-settings-tab .setting-item-control {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
