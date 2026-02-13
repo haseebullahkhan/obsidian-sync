@@ -1,34 +1,46 @@
 # Obsidian Sync
 
-Sync your Obsidian vault to Google Drive with auto-sync and basic conflict handling. Works on desktop and mobile.
+Sync your Obsidian vault to Google Drive with auto-sync and conflict handling. Desktop and mobile supported.
+
+## What’s included
+- Built JS bundle (`main.js`), `manifest.json`, `styles.css`
+- Prebuilt release zip: obsidian-sync-v1.0.0.zip (see GitHub Releases)
 
 ## Install (manual sideload)
-1) Build is already included (main.js in repo). To rebuild yourself: `npm install && npm run build`.
-2) Use the packaged zip (obsidian-sync-1.0.0.zip) or copy `main.js`, `manifest.json`, and `styles.css` into your vault at `.obsidian/plugins/obsidian-sync/`.
-3) In Obsidian: Settings → Community plugins → Enable “Obsidian Sync”.
-4) Open the plugin settings and click **Authenticate** to link Google Drive.
+1) Download obsidian-sync-v1.0.0.zip from the [v1.0.0 release](https://github.com/haseebullahkhan/obsidian-sync/releases/tag/v1.0.0).
+2) Extract to your vault at `.obsidian/plugins/obsidian-sync/` so the folder contains `main.js`, `manifest.json`, and `styles.css`.
+3) In Obsidian: Settings → Community plugins → Enable **Obsidian Sync**.
+4) Open the plugin settings and click **Authenticate** to link Google Drive, then run **Sync Now** once.
 
-## Package for distribution
-- Build artifacts: `npm run build` (main.js).
-- Create zip: `Compress-Archive -LiteralPath main.js,manifest.json,styles.css -DestinationPath obsidian-sync-1.0.0.zip -Force` (PowerShell) or `zip -r obsidian-sync-1.0.0.zip main.js manifest.json styles.css`.
-- BRAT/side-load: point to the repo root (with built files) or to the zip in a GitHub release.
+## Build or repackage (for devs)
+- Install deps: `npm install`
+- Build: `npm run build`
+- Package zip (PowerShell): `Compress-Archive -LiteralPath main.js,manifest.json,styles.css -DestinationPath obsidian-sync-v1.0.0.zip -Force`
+- Package zip (bash): `zip -r obsidian-sync-v1.0.0.zip main.js manifest.json styles.css`
 
 ## Commands
 - Authenticate with Google Drive
 - Sync vault with Google Drive now
 - View sync status
 
-## How to get Google credentials (OAuth)
-1) Go to Google Cloud Console → create (or pick) a project.
+## Google OAuth setup (desktop flow)
+1) Go to Google Cloud Console → create/select a project.
 2) Enable **Google Drive API**.
-3) Create **OAuth 2.0 Client ID** → Application type: **Desktop app**.
-4) Copy the **Client ID** and **Client Secret**. Keep them private.
-5) In Obsidian plugin settings, click **Authenticate** and complete the OAuth flow using these values.
+3) Configure OAuth consent screen
+	- User type: External (quickest for testing) or Internal if your org allows.
+	- App info: Name and support email.
+	- Scopes: add `https://www.googleapis.com/auth/drive.file`.
+	- Test users: add the Google accounts that will authenticate.
+4) Create OAuth client credentials
+	- Navigation: **APIs & Services → Credentials → Create Credentials → OAuth client ID**.
+	- Application type: **Desktop app**.
+	- Download the JSON or note the **Client ID** and **Client Secret**; keep them private.
+5) In Obsidian, open plugin settings and click **Authenticate**. Complete the browser flow using the desktop client you created. After success, the plugin stores access/refresh tokens locally.
 
 ## Notes
-- Keep `.env` local; never commit secrets.
-- Requires internet; large vaults may take time on first sync.
-- Conflict policy: manual (default), prefer local, or prefer remote.
+- Keep secrets private; never commit client IDs/secrets.
+- First sync of a large vault can take time.
+- Conflict policy options: manual (default), prefer local, or prefer remote.
 
 ## Support
 Issues/feedback: [GitHub](https://github.com/haseebullahkhan/obsidian-sync)
