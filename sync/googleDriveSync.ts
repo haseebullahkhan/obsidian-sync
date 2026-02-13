@@ -55,19 +55,26 @@ export class GoogleDriveSync {
 			scope,
 		});
 
-		const deviceResp = await fetch("https://oauth2.googleapis.com/device/code", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/x-www-form-urlencoded",
-			},
-			body: deviceParams.toString(),
-		});
+		let deviceData: any;
+		try {
+			const deviceResp = await fetch("https://oauth2.googleapis.com/device/code", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/x-www-form-urlencoded",
+				},
+				body: deviceParams.toString(),
+			});
 
-		if (!deviceResp.ok) {
-			throw new Error("Failed to start device authorization.");
+			deviceData = await deviceResp.json().catch(() => ({}));
+
+			if (!deviceResp.ok) {
+				const errText = deviceData?.error_description || deviceData?.error || "Failed to start device authorization.";
+				throw new Error(errText);
+			}
+		} catch (err) {
+			const message = err instanceof Error ? err.message : String(err);
+			throw new Error(`Failed to start device authorization: ${message}`);
 		}
-
-		const deviceData = await deviceResp.json();
 		const { device_code, user_code, verification_url, interval = 5 } = deviceData;
 
 		new Notice(
