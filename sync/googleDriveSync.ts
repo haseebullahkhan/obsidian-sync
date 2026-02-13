@@ -72,7 +72,7 @@ export class GoogleDriveSync {
 
 		new Notice(
 			`Open ${verification_url}\nEnter code: ${user_code}\nKeep this window open; polling for completion...`,
-			10000
+			30000
 		);
 
 		// Poll token endpoint until authorized
