@@ -4,9 +4,14 @@ Sync your Obsidian vault to Google Drive with auto-sync and basic conflict handl
 
 ## Install (manual sideload)
 1) Build is already included (main.js in repo). To rebuild yourself: `npm install && npm run build`.
-2) Copy `main.js`, `manifest.json`, and `styles.css` into your vault at `.obsidian/plugins/obsidian-sync/`.
+2) Use the packaged zip (obsidian-sync-1.0.0.zip) or copy `main.js`, `manifest.json`, and `styles.css` into your vault at `.obsidian/plugins/obsidian-sync/`.
 3) In Obsidian: Settings → Community plugins → Enable “Obsidian Sync”.
 4) Open the plugin settings and click **Authenticate** to link Google Drive.
+
+## Package for distribution
+- Build artifacts: `npm run build` (main.js).
+- Create zip: `Compress-Archive -LiteralPath main.js,manifest.json,styles.css -DestinationPath obsidian-sync-1.0.0.zip -Force` (PowerShell) or `zip -r obsidian-sync-1.0.0.zip main.js manifest.json styles.css`.
+- BRAT/side-load: point to the repo root (with built files) or to the zip in a GitHub release.
 
 ## Commands
 - Authenticate with Google Drive
