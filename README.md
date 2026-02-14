@@ -40,7 +40,7 @@ Sync your Obsidian vault to Google Drive with auto-sync and conflict handling. D
 	- Test users: add the Google accounts that will authenticate.
 4) Create OAuth client credentials
 	- Navigation: **APIs & Services → Credentials → Create Credentials → OAuth client ID**.
-	- Application type: **Desktop app** (Google auto-assigns a loopback redirect; no extra URLs needed).
+	- Application type: **TVs and Limited Input devices** (required for device flow; Desktop will fail with “Invalid client type”).
 	- Download the JSON or note the **Client ID** and **Client Secret**; keep them private.
 5) In Obsidian plugin settings, paste the Client ID and Client Secret.
 6) Click **Authenticate**. You’ll get a verification URL and code. Open the URL in a browser, enter the code, and keep Obsidian open while the plugin finishes the device flow. Tokens are stored locally.

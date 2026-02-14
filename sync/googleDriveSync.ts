@@ -68,8 +68,12 @@ export class GoogleDriveSync {
 			deviceData = await deviceResp.json().catch(() => ({}));
 
 			if (!deviceResp.ok) {
-				const errText = deviceData?.error_description || deviceData?.error || "Failed to start device authorization.";
-				throw new Error(errText);
+				const base = deviceData?.error_description || deviceData?.error || "Failed to start device authorization.";
+				const hint =
+					typeof base === "string" && base.toLowerCase().includes("invalid client type")
+						? " Use an OAuth client of type 'TVs and Limited Input' in Google Cloud."
+						: "";
+				throw new Error(`${base}${hint}`);
 			}
 		} catch (err) {
 			const message = err instanceof Error ? err.message : String(err);
